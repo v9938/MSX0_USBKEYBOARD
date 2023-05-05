@@ -37,7 +37,7 @@
 unsigned char JoyCl = 0;
 
 // Support Controller
-#define JoyClMax			VID054CPID09CC	//最終コントローラID
+#define JoyClMax			VID0F0DPID00ED	//最終コントローラID
 
 #define UNKNOWN_VIDPID		255				//非対応コントーラID
 
@@ -174,6 +174,7 @@ unsigned char JoyCl = 0;
 
 
 #define VID054CPID09CC		10				//PS4 DUALSHOCK 4 (CUH-ZCT2J)
+#define VID0F0DPID00ED		11				//HORI FIGHTING STICK MINI
 // PS4 DUALSHOCK 4 (CUH-ZCT2J)
 //
 //VID: 0x54C PID: 0x9CC Connected.
@@ -488,6 +489,7 @@ void JoystickEvents::OnGamePadChanged(const GamePadEventData *evt)
 		break;
 
 		case VID054CPID09CC:	//PS4 DUALSHOCK 4 (CUH-ZCT2J)
+		case VID0F0DPID00ED:	//HORI FIGHTING STICK MINI
 		MakeKeyData_Hat((evt->raw_data[5]) & 0x0f);
 		MakeKeyData_AB(evt->raw_data[5],5,evt->raw_data[5],6);				// A:× B:○
 		MakeKeyData_SelStart(evt->raw_data[6],4,evt->raw_data[6],5);		// SEL:SHARE START:OPTION
