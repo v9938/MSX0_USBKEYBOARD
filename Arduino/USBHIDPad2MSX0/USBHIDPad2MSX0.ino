@@ -5,6 +5,7 @@
 // Copyright 2023 @V9938
 //	
 //	23/04/29 V1.0		1st version
+//	23/05/06 V1.1		Add some supported controllers
 //
 ////////////////////////////////////////////////////////////////////////
 // 下記ライブラリを使用しています。
@@ -18,7 +19,7 @@
 #include <Wire.h>
 
 // UARTにデバッグMessageを表示するか（通常は無効)
-//#define DEBUG_PRINT 1
+//#define DEBUG_PRINT 
 //#define USB_RAW_DISPLAY
 
 #define FACES_KEYBOARD_I2C_ADDR 0x08
@@ -36,9 +37,9 @@
 unsigned char JoyCl = 0;
 
 // Support Controller
-#define JoyClMax			5				//対応JOYPAD数
+#define JoyClMax			VID054CPID09CC	//最終コントローラID
 
-#define UNKNOWN_VIDPID		255				//SONY PSX mini Controller (SCPH-1000R)
+#define UNKNOWN_VIDPID		255				//非対応コントーラID
 
 #define VID0CA3PID0025		0				//MD PAD USB (MK-16500)
 #define VID0CA3PID0024		1				//MD 6B PAD USB (HAA-2522)
@@ -47,7 +48,7 @@ unsigned char JoyCl = 0;
 // Byte4 Y方向 UP   0x00-0x7f-0xff DOWN
 // Byte5 0x4F A / 0x2F B / 0x8F X / 0x1F Y 
 // Byte6 0x02 C / 0x20 Start / 0x01 Z / 0x10 Mode
-// 01 = 0 02:01 04:2 08:3 10:4 20:5 40:6 80:7
+
 #define VID0F0DPID0138		2				//KONAMI PCEmini Controller(HT-002)
 
 // Byte0 II 0x02 / I 0x04 
@@ -65,6 +66,126 @@ unsigned char JoyCl = 0;
 // Byte1 HAT X方向 LEFT 0x00 - 0x04 - 0x08 RIGHT Y方向 UP 0x00 - 0x10 - 0x20 DOWN  SEL 0x01 START 0x02
 //
 
+
+// V1.1 Added
+// --------------------------------------------------
+//
+#define VID2DC8PID2101		5				//8BitDo SN30 Pro
+// 8BitDo SN30 Pro
+//VID: 0x2DC8 PID: 0x2101 Connected.
+//BUF: 01000008FF7FFF7F　←挿した後の初期値
+//BUF: 01 00 00 00FF7FFF7F　←十字キー[上]を押した ★
+//BUF: 01 00 00 04FF7FFF7F　←十字キー[下]を押した ★
+//BUF: 01 00 00 06FF7FFF7F　←十字キー[左]を押した ★
+//BUF: 01 00 00 02FF7FFF7F　←十字キー[右]を押した ★
+//BUF: 01 01 00 08FF7FFF7F　←ボタン[A]を押した ★A(TRIGGER1)
+//BUF: 01 02 00 08FF7FFF7F　←ボタン[B]を押した ★B(TRIGGER3)
+//BUF: 01 08 00 08FF7FFF7F　←ボタン[X]を押した ◎B(TRIGGER3)
+//BUF: 01 10 00 08FF7FFF7F　←ボタン[Y]を押した ◎A(TRIGGER1)
+//BUF: 01 00 01 08FF7FFF7F　←ボタン[LT]を押した
+//BUF: 01 00 02 08FF7FFF7F　←ボタン[RT]を押した
+//BUF: 01 40 00 08FF7FFF7F　←ボタン[LB]を押した
+//BUF: 01 80 00 08FF7FFF7F　←ボタン[RB]を押した
+//BUF: 01 00 08 08FF7FFF7F　←ボタン[START]を押した ★START
+//BUF: 01 00 04 08FF7FFF7F　←ボタン[SELECT]を押した ★SELECT
+//BUF: 01 00 10 08FF7FFF7F　←ボタン[HOME]を押した
+//
+// Byte1: button [RB LB 0 Y    | X     0       B A]
+// Byte2: button [0  0  0 HOME | START SELECT RT LT
+// Byte3: HAT
+// --------------------------------------------------
+
+
+#define VID0CA3PID0027		6				//SEGA アストロシティミニ コントロールパッド
+// SEGA アストロシティミニ コントロールパッド
+// ※SEGA MDMINI系と同じ配置
+//VID: 0xCA3 PID: 0x27 Connected.
+//BUF: 01 7F 7F 7F 7F 0F 00 00　←挿した後の初期値
+//BUF: 01 7F 7F 7F 00 0F 00 00　←十字キー[上]を押した ★
+//BUF: 01 7F 7F 7F FF 0F 00 00　←十字キー[下]を押した ★
+//BUF: 01 7F 7F 00 7F 0F 00 00　←十字キー[左]を押した ★
+//BUF: 01 7F 7F FF 7F 0F 00 00　←十字キー[右]を押した ★
+//BUF: 01 7F 7F 7F 7F 4F 00 00　←ボタン[D]を押した ◎B(TRIGGER3)
+//BUF: 01 7F 7F 7F 7F 2F 00 00　←ボタン[E]を押した ◎A(TRIGGER1)
+//BUF: 01 7F 7F 7F 7F 0F 02 00　←ボタン[F]を押した ◎B(TRIGGER3)
+//BUF: 01 7F 7F 7F 7F 8F 00 00　←ボタン[A]を押した ★A(TRIGGER1)
+//BUF: 01 7F 7F 7F 7F 1F 00 00　←ボタン[B]を押した ★B(TRIGGER3)
+//BUF: 01 7F 7F 7F 7F 0F 01 00　←ボタン[C]を押した ◎A(TRIGGER1)
+//BUF: 01 7F 7F 7F 7F 0F 20 00　←ボタン[START]を押した ★START
+//BUF: 01 7F 7F 7F 7F 0F 10 00　←ボタン[CREDIT]を押した ★SELECT
+//
+// Byte3 X方向 LEFT 0x00-0x7f-0xff RIGHT
+// Byte4 Y方向 UP   0x00-0x7f-0xff DOWN
+// Byte5 button [ A D E     B      | 1 1 1 1 ]
+// Byte6 button [ 0 0 START CREDIT | 0 0 F C ]
+
+#define VID0AE4PID0702		7				//TAITO イーグレットツーミニ コントロールパッド
+#define VID0AE4PID0703		8				//TAITO イーグレットツーミニ コントロールパネル
+// TAITO イーグレットツーミニ コントロールパッド(PID: 0x702)
+// TAITO イーグレットツーミニ コントロールパネル(PID: 0x703)
+//
+//VID: 0xAE4 PID: 0x702 Connected.
+//VID: 0xAE4 PID: 0x703 Connected.
+//BUF: 00 00 7F 7F 00 00 00 00　←挿した後の初期値
+//BUF: 00 00 7F 00 00 00 00 00　←十字キー[上]を押した ★
+//BUF: 00 00 7F FF 00 00 00 00　←十字キー[下]を押した ★
+//BUF: 00 00 00 7F 00 00 00 00　←十字キー[左]を押した ★
+//BUF: 00 00 FF 7F 00 00 00 00　←十字キー[右]を押した ★
+//BUF: 10 00 7F 7F 00 00 00 00　←ボタン[A]を押した ★A(TRIGGER1)
+//BUF: 04 00 7F 7F 00 00 00 00　←ボタン[B]を押した ★B(TRIGGER3)
+//BUF: 02 00 7F 7F 00 00 00 00　←ボタン[C]を押した ◎A(TRIGGER1)
+//BUF: 00 01 7F 7F 00 00 00 00　←ボタン[D]を押した ◎B(TRIGGER3)
+//BUF: 08 00 7F 7F 00 00 00 00　←ボタン[E]を押した ◎A(TRIGGER1)
+//BUF: 01 00 7F 7F 00 00 00 00　←ボタン[F]を押した ◎B(TRIGGER3)
+//BUF: 40 00 7F 7F 00 00 00 00　←ボタン[真ん中のピンク]を押した ★SELECT
+//BUF: 80 00 7F 7F 00 00 00 00　←ボタン[真ん中の青]を押した ★START
+//BUF: 00 02 7F 7F 00 00 00 00　←ボタン[真ん中の白]を押した
+//
+// Byte0 button [ BLUE PINK 0 A | E B C     F ]
+// Byte1 button [ 0    0    0 0 | 0 0 WHITE D ]
+// Byte2 X方向 LEFT 0x00-0x7f-0xff RIGHT
+// Byte3 Y方向 UP   0x00-0x7f-0xff DOWN
+
+
+#define VID2F24PID0039		9				//Matflash F300 Elite
+// Matflash F300 Elite
+//
+//VID: 0x2F24 PID: 0x39 Connected.
+//BUF: 00 00 0F 80 80 80 80 00　←挿した後の初期値
+//BUF: 00 00 00 80 80 80 80 00　←十字キー[上]を押した ★
+//BUF: 00 00 04 80 80 80 80 00　←十字キー[下]を押した ★
+//BUF: 00 00 06 80 80 80 80 00　←十字キー[左]を押した ★
+//BUF: 00 00 02 80 80 80 80 FF　←十字キー[右]を押した ★
+//BUF: 02 00 0F 80 80 80 80 00　←ボタン[A]を押した ★A(TRIGGER1)
+//BUF: 04 00 0F 80 80 80 80 00　←ボタン[B]を押した ★B(TRIGGER3)
+//BUF: 80 00 0F 80 80 80 80 00　←ボタン[RT]を押した ◎A(TRIGGER1)
+//BUF: 40 00 0F 80 80 80 80 00　←ボタン[LT]を押した
+//BUF: 01 00 0F 80 80 80 80 00　←ボタン[X]を押した ◎B(TRIGGER3)
+//BUF: 08 00 0F 80 80 80 80 00　←ボタン[Y]を押した ◎A(TRIGGER1)
+//BUF: 20 00 0F 80 80 80 80 00　←ボタン[RB]を押した ◎B(TRIGGER3)
+//BUF: 10 00 0F 80 80 80 80 00　←ボタン[LB]を押した
+//BUF: 00 02 0F 80 80 80 80 00　←ボタン[START]を押した ★START
+//BUF: 00 01 0F 80 80 80 80 00　←ボタン[SELECT]を押した ★SELECT
+//BUF: 00 10 0F 80 80 80 80 00　←ボタン[HOME]を押した
+//
+// Byte0 button [RT LT RB LB   | Y B A     X      ]
+// Byte1 button [0  0  0  HOME | 0 0 START SELECT ]
+// Byte2 HAT
+
+
+#define VID054CPID09CC		10				//PS4 DUALSHOCK 4 (CUH-ZCT2J)
+// PS4 DUALSHOCK 4 (CUH-ZCT2J)
+//
+//VID: 0x54C PID: 0x9CC Connected.
+//BUF: 01 7F 7F 7F 7F 08 00 38　←挿した後の初期値
+//
+// Byte1 L Stick X方向 LEFT 0x00-0x7f-0xff RIGHT
+// Byte2 L Stick Y方向 UP   0x00-0x7f-0xff DOWN
+// Byte3 R Stick X方向 LEFT 0x00-0x7f-0xff RIGHT
+// Byte4 R Stick Y方向 UP   0x00-0x7f-0xff DOWN
+// Byte5 button [ △ ○ × □ | HAT[4bit] ]
+// Byte6 button [ RSTICK LSTICK OPTIONS SHARE | R2 L2 R1 L1 ]
+
 //#define VID_PID_UNKNOWN		128				//Unknown Direct Input
 
 // Byte1 X方向 LEFT 0x00-0x7f-0xff RIGHT
@@ -74,9 +195,12 @@ unsigned char JoyCl = 0;
 // Byte5 0x1F A / 0x2F B
 // Byte6 0x20 Start / 0x10 Select
 
+// Byte0 button [ BLUE PINK 0 A | E B C     F ]
+// Byte1 button [ 0    0    0 0 | 0 0 WHITE D ]
+
 // VID&PIDのテーブル
-const  uint16_t  tVID[] = {0x0CA3, 0x0CA3, 0x0F0D, 0x0810, 0x054c};
-const  uint16_t  tPID[] = {0x0025, 0x0024, 0x0138, 0xE501, 0x0CDA};
+const  uint16_t  tVID[] = {0x0CA3, 0x0CA3, 0x0F0D, 0x0810, 0x054c, 0x2DC8, 0x0CA3, 0x0AE4, 0x0AE4, 0x2F24, 0x054C };
+const  uint16_t  tPID[] = {0x0025, 0x0024, 0x0138, 0xE501, 0x0CDA, 0x2101, 0x0027, 0x0702, 0x0703, 0x0039, 0x09CC };
 
 
 
@@ -261,11 +385,13 @@ void loop()
 			//対応コントローラチェック
 			//非対応コントローラはVIDとPIDをテーブルに追加して、
 			//RAW Dataのデコードを追記すれば対応可能
-			for (i = 0 ;i<JoyClMax;i++){
+			for (i = 0 ;i<JoyClMax+1;i++){
 				if ((buf.idVendor == tVID[i]) && (buf.idProduct == tPID[i])) {
 					JoyCl = i;
 					#ifdef DEBUG_PRINT 
 					Serial.println("Support USB JoyStick");
+					Serial.print("ID: ");
+					Serial.println(JoyCl);
 					#endif
 				}
 			}
@@ -327,6 +453,44 @@ void JoystickEvents::OnGamePadChanged(const GamePadEventData *evt)
 		MakeKeyData_HatPSX(evt->raw_data[1]);
 		MakeKeyData_AB(evt->raw_data[0],1,evt->raw_data[0],2);				// A:× B:○
 		MakeKeyData_SelStart(evt->raw_data[1],0,evt->raw_data[1],1);		// SEL:SELECT START:START
+		break;
+
+		case VID2DC8PID2101:	//8BitDo SN30 Pro
+		MakeKeyData_Hat(evt->raw_data[3]);
+		MakeKeyData_AB(evt->raw_data[1],4,evt->raw_data[1],3);				// A:Y B:X
+		MakeKeyData_AB(evt->raw_data[1],0,evt->raw_data[1],1);				// A:A B:B
+		MakeKeyData_SelStart(evt->raw_data[2],2,evt->raw_data[2],3);		// SEL:SELECT START:START
+		break;
+
+		case VID0CA3PID0027:	//SEGA アストロシティミニ コントロールパッド
+		MakeKeyData_XY(evt->raw_data[3],evt->raw_data[4]);
+		MakeKeyData_AB(evt->raw_data[5],5,evt->raw_data[5],6);			// A:E B:D
+		MakeKeyData_AB(evt->raw_data[6],0,evt->raw_data[6],1);			// A:C B:F
+		MakeKeyData_AB(evt->raw_data[5],7,evt->raw_data[5],4);			// A:A B:B
+		MakeKeyData_SelStart(evt->raw_data[6],4,evt->raw_data[6],5);	// SEL:CREDIT START:START
+		break;
+
+		case VID0AE4PID0702:	//TAITO イーグレットツーミニ コントロールパッド
+		case VID0AE4PID0703:	//TAITO イーグレットツーミニ コントロールパネル
+		MakeKeyData_XY(evt->raw_data[2],evt->raw_data[3]);
+		MakeKeyData_AB(evt->raw_data[0],4,evt->raw_data[0],2);			// A:A B:B
+		MakeKeyData_AB(evt->raw_data[0],1,evt->raw_data[1],0);			// A:C B:D
+		MakeKeyData_AB(evt->raw_data[0],3,evt->raw_data[0],0);			// A:E B:F
+		MakeKeyData_SelStart(evt->raw_data[0],6,evt->raw_data[0],7);	// SEL:PINK START:BLUE
+		break;
+
+		case VID2F24PID0039:	//Matflash F300 Elite
+		MakeKeyData_Hat(evt->raw_data[2]);
+		MakeKeyData_AB(evt->raw_data[0],1,evt->raw_data[0],2);				// A:A B:B
+		MakeKeyData_AB(evt->raw_data[0],7,evt->raw_data[0],5);				// A:RT B:RB
+		MakeKeyData_AB(evt->raw_data[0],3,evt->raw_data[0],0);				// A:Y B:X
+		MakeKeyData_SelStart(evt->raw_data[1],0,evt->raw_data[1],1);		// SEL:SELECT START:START
+		break;
+
+		case VID054CPID09CC:	//PS4 DUALSHOCK 4 (CUH-ZCT2J)
+		MakeKeyData_Hat((evt->raw_data[5]) & 0x0f);
+		MakeKeyData_AB(evt->raw_data[5],5,evt->raw_data[5],6);				// A:× B:○
+		MakeKeyData_SelStart(evt->raw_data[6],4,evt->raw_data[6],5);		// SEL:SHARE START:OPTION
 		break;
 
 		default:				//不明コントローラ
