@@ -83,6 +83,13 @@ KONAMI(HORI) PCエンジンminiコントローラー HTG-002
 KONAMI(HORI) ターボパッド for PCエンジン mini HTG-003  
 KONAMI(HORI) Core Grafx Mini mini Turbo Controller HTG-006  
 SONY プレイステーション クラシック付属コントローラ SCPH-1000R  
+8BitDo SN30 Pro  
+SEGA アストロシティミニ コントロールパッド  
+TAITO イーグレットツーミニ コントロールパッド  
+TAITO イーグレットツーミニ コントロールパネル  
+Matflash F300 Elite  
+SONY PS4 DUALSHOCK 4 (CUH-ZCT2J)  
+HORI FIGHTING STICK MINI  
 
 ## ■ 頒布するキットについて   
 
@@ -110,18 +117,12 @@ M5 Stack USB Moduleは別途購入してください。
 ### フルキット
 ### ○6.5mm厚 USBのみ対応
 
-#### 家電のKENちゃん  
-URL未定
-<!-- <https://www.kadenken.com/view/item/00000000xxxx?category_page_id=ctxxx> -->
 #### Switch Science  
 URL未定
 <!-- <https://> -->
 
 ### ○13mm厚 MSX規格ジョイスティックポート有り
 
-#### 家電のKENちゃん  
-URL未定
-<!-- <https://www.kadenken.com/view/item/00000000xxxx?category_page_id=ctxxx> -->
 #### Switch Science  
 URL未定
 <!-- <https://> -->
@@ -129,13 +130,12 @@ URL未定
 ### 完成品
 ### ○6.5mm厚 USBのみ対応
 #### 家電のKENちゃん  
-URL未定
-<!-- <https://www.kadenken.com/view/item/00000000xxxx?category_page_id=ctxxx> -->
+<https://www.kadenken.com/view/item/000000001590>
 
 ### ○13mm厚 MSX規格ジョイスティックポート有り
 #### 家電のKENちゃん  
-URL未定
-<!-- <https://www.kadenken.com/view/item/00000000xxxx?category_page_id=ctxxx> -->
+<https://www.kadenken.com/view/item/000000001589>
+
 
 ## ■ 組み立て説明書について  
 準備中です。
@@ -158,12 +158,18 @@ URL未定
 |  | MSXジョイスティック端子 (13mm厚のみ対応)|
 
 ## ■ 設計データ
+
 ### Firmware (USB KEYBOARD版)
 [USB KEYBOARD/MSX JOYSTICK対応版 Firmware](./Arduino/USBHIDBootKbd_MSX0/)  
+[USB KEYBOARD MSX0JOYPADモード Firmware](./Arduino/USBHIDKbd_MSX0_PADMODE/)  
 
 ### Firmware (USB JOYSTICK版)  
-準備中です。
-<!-- [USB JOYSTICK対応版 Firmware](./Arduino/USBHIDBootKbd_MSX0/) -->  
+[USB JOYSTICK対応版 Firmware](./Arduino/USBHIDPad2MSX0/)  
+
+### Firmware (組み立て動作チェック用)  
+
+ひたすら'MSX0 'と入力されます。  
+[組み立て動作チェック用 Firmware](./Arduino/TEST_MSX0KEYPADMode/)  
 
 ### 回路図
 [回路図 (PDF版)](./PCB/KEYBOARDSTACK_Schematic.pdf)  
