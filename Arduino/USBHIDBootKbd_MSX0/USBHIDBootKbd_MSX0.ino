@@ -7,7 +7,7 @@
 //	23/04/06 V1.0		1st version
 //
 ////////////////////////////////////////////////////////////////////////
-// ‰º‹Lƒ‰ƒCƒuƒ‰ƒŠ‚ğg—p‚µ‚Ä‚¢‚Ü‚·B
+// ä¸‹è¨˜ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã‚’ä½¿ç”¨ã—ã¦ã„ã¾ã™ã€‚
 // USB Host Shield library Version 2.0
 // https://chome.nerpa.tech/arduino_usb_host_shield_projects/
 ////////////////////////////////////////////////////////////////////////
@@ -28,53 +28,73 @@
 #define Get_Bit(val, bitn)    (val &(1<<(bitn)) )
 
 
-// UART‚ÉƒfƒoƒbƒOMessage‚ğ•\¦‚·‚é‚©i’Êí‚Í–³Œø)
+// UARTã«ãƒ‡ãƒãƒƒã‚°Messageã‚’è¡¨ç¤ºã™ã‚‹ã‹ï¼ˆé€šå¸¸ã¯ç„¡åŠ¹)
 //#define DEBUG_PRINT 1
-// I2C‚ÌƒAƒhƒŒƒX
+// I2Cã®ã‚¢ãƒ‰ãƒ¬ã‚¹
 #define FACES_KEYBOARD_I2C_ADDR 0x08
 
-// M5ƒL[Š„‚è‚İ‚Ìo—Í‚Ìƒ|[ƒg
+// M5ã‚­ãƒ¼å‰²ã‚Šè¾¼ã¿ã®å‡ºåŠ›ã®ãƒãƒ¼ãƒˆ
 #define IRQ_1 Set_Bit(PORTD,4)
 #define IRQ_0 Clr_Bit(PORTD,4)
 
-// ƒOƒ[ƒoƒ‹•Ï”
-unsigned char hadPressed = 0;			// ƒ{ƒ^ƒ“‰Ÿ‚³‚ê‚½‚©ƒtƒ‰ƒO
-unsigned char stringBuffer[128];		// KEYBOARD“ü—Í’l‚ğ’™‚ß‚éƒoƒbƒtƒ@[
-unsigned char strBufEnd;				// ƒoƒbƒtƒ@[ÅI’l
-unsigned char strBufPointer;			// ƒoƒbƒtƒ@[Œ»İ’l
-unsigned char padMode;					// PADƒ‚[ƒh‚©‚Ç‚¤‚©‚Ìƒtƒ‰ƒO
-unsigned char padData;					// I2C‘—M’l 0x7fˆÈã‚ğMSX0‹N“®‚É‘—‚é‚ÆGAMEPADƒ‚[ƒh‚É‚È‚é
-unsigned char tDataOld;					// PAD‚Ì‘O“ü—Í’l
+// ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°
+unsigned char hadPressed = 0;			// ãƒœã‚¿ãƒ³æŠ¼ã•ã‚ŒãŸã‹ãƒ•ãƒ©ã‚°
+unsigned char firstBoot = 0;			// æ›¸ãè¾¼ã¿ãƒ¢ãƒ¼ãƒ‰ã®BUSY OUTãƒ•ãƒ©ã‚°
+unsigned char stringBuffer[128];		// KEYBOARDå…¥åŠ›å€¤ã‚’è²¯ã‚ã‚‹ãƒãƒƒãƒ•ã‚¡ãƒ¼
+unsigned char strBufEnd;				// ãƒãƒƒãƒ•ã‚¡ãƒ¼æœ€çµ‚å€¤
+unsigned char strBufPointer;			// ãƒãƒƒãƒ•ã‚¡ãƒ¼ç¾åœ¨å€¤
+unsigned char padMode;					// PADãƒ¢ãƒ¼ãƒ‰ã‹ã©ã†ã‹ã®ãƒ•ãƒ©ã‚°
+unsigned char padData;					// I2Cé€ä¿¡å€¤ 0x7fä»¥ä¸Šã‚’MSX0èµ·å‹•æ™‚ã«é€ã‚‹ã¨GAMEPADãƒ¢ãƒ¼ãƒ‰ã«ãªã‚‹
+unsigned char tDataOld;					// PADã®å‰å…¥åŠ›å€¤
+unsigned char byteDAT[32];				// I2C å—ä¿¡buffer
 
 
-// I2C 0x08‚ÌŠ„‚è‚İˆ—
+// I2C 0x08ã®å‰²ã‚Šè¾¼ã¿(read)å‡¦ç†
 void requestEvent()
 {
 
-// ƒL[‚ª‰Ÿ‚³‚ê‚½—š—ğƒ`ƒFƒbƒN
-	if (hadPressed == 1){
-		if (padMode == 0){
-//Keyboardƒ‚[ƒhFKeyBuffer‚É’™‚ß‚½ƒf[ƒ^‚ğ‡Ÿ‘—‚é
-			Wire.write(stringBuffer[strBufPointer]);
-			strBufPointer++;
-			if (strBufEnd == strBufPointer) {
-				hadPressed = 0;
-				IRQ_1;
-			}
+	if (padMode == 1){
+		//PADãƒ¢ãƒ¼ãƒ‰ï¼šãƒ‡ãƒ¼ã‚¿ã‚’ãã®ã¾ã¾é€ã‚‹
+		if(firstBoot == 1) {
+			//è­˜åˆ¥ï¼ˆãƒ‘ãƒƒãƒ‰ãƒ¢ãƒ¼ãƒ‰ï¼‰
+			Wire.write(0xff);
+			firstBoot = 0;
 		}else{
-//GamePadƒ‚[ƒhF“ü—Í’l‚ğ‚»‚Ì‚Ü‚Ü‘—‚é
 			Wire.write(padData);
-			hadPressed = 0;
-			IRQ_1;
 		}
-
 	}else{
-// M5ƒL[Š„‚è‚İ‚ª–³‚¢ê‡‚Í’Êí‚±‚±‚©‚çƒf[ƒ^‚ª•Ô‚³‚ê‚é
-		Wire.write(padData);
-	}	
+		//Keyboardãƒ¢ãƒ¼ãƒ‰ï¼šKeyBufferã«è²¯ã‚ãŸãƒ‡ãƒ¼ã‚¿ã‚’é †æ¬¡é€ã‚‹
+
+		if(firstBoot == 1) {
+			//è­˜åˆ¥ï¼ˆã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ãƒ¢ãƒ¼ãƒ‰ï¼‰
+			Wire.write(0x00);
+			firstBoot = 0;
+		}else{
+			// ã‚­ãƒ¼ãŒæŠ¼ã•ã‚ŒãŸå±¥æ­´ãƒã‚§ãƒƒã‚¯
+			if (hadPressed == 1){
+				Wire.write(stringBuffer[strBufPointer]);
+				strBufPointer++;
+				if (strBufEnd == strBufPointer) {
+					hadPressed = 0;
+					IRQ_1;
+				}
+			}
+		}
+	}
 }
 
-// Class’è‹`
+// I2C 0x08ã®å‰²ã‚Šè¾¼ã¿(Write)å‡¦ç†
+void sendEvent()
+{
+	while(Wire.available()){
+		// 
+		if (Wire.read() == 0xfe){
+			firstBoot = 1;
+	  	}
+	}
+}
+
+// Classå®šç¾©
 class KbdRptParser : public KeyboardReportParser
 {
 	void PrintKey(uint8_t mod, uint8_t key);
@@ -90,7 +110,7 @@ protected:
 
 void KbdRptParser::PrintKey(uint8_t m, uint8_t key)
 {
-// ƒL[ƒ{[ƒh“ü—Í‚Ì•\¦iƒfƒoƒbƒO—p)
+// ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰å…¥åŠ›ã®è¡¨ç¤ºï¼ˆãƒ‡ãƒãƒƒã‚°ç”¨)
 	#ifdef DEBUG_PRINT 
 	MODIFIERKEYS mod;
 	*((uint8_t*)&mod) = m;
@@ -111,22 +131,22 @@ void KbdRptParser::PrintKey(uint8_t m, uint8_t key)
 
 };
 void KeyDataUpdate(unsigned char c){
-// ƒL[ƒ{[ƒhƒoƒbƒtƒ@[‚Ö‚Ìˆê•¶š“ü—Í
+// ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ãƒãƒƒãƒ•ã‚¡ãƒ¼ã¸ã®ä¸€æ–‡å­—å…¥åŠ›
 	stringBuffer[strBufEnd] = c;
-	strBufEnd++;						//toDO:Overflow‘Îô
+	strBufEnd++;						//toDO:Overflowå¯¾ç­–
 
 	hadPressed = 1;
 	IRQ_0;
 
 }
 void KeyDataStrUpdate(String str){
-// ƒL[ƒ{[ƒhƒoƒbƒtƒ@[‚Ö‚Ì•¶š—ñ“ü—Í(MAX16•¶š)
+// ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ãƒãƒƒãƒ•ã‚¡ãƒ¼ã¸ã®æ–‡å­—åˆ—å…¥åŠ›(MAX16æ–‡å­—)
 
 	unsigned char chrs[16];
 	int i;
-	str.toCharArray(chrs,16);  					//StrƒNƒ‰ƒX‚©‚ç•ÏŠ·
+	str.toCharArray(chrs,16);  					//Strã‚¯ãƒ©ã‚¹ã‹ã‚‰å¤‰æ›
 
-	for (i=0;i<str.length();i++){				//•¶šƒRƒs[
+	for (i=0;i<str.length();i++){				//æ–‡å­—ã‚³ãƒ”ãƒ¼
 		if (chrs[i] == 0x0a){
 			stringBuffer[strBufEnd] = 0x0d;
 		}else{
@@ -135,26 +155,26 @@ void KeyDataStrUpdate(String str){
 		strBufEnd++;
 	}
 
-	hadPressed = 1;								//ƒL[ƒf[ƒ^‚ ‚è
-	IRQ_0;										//ƒL[“ü—Í‚ğM5‚É’Ê’m
+	hadPressed = 1;								//ã‚­ãƒ¼ãƒ‡ãƒ¼ã‚¿ã‚ã‚Š
+	IRQ_0;										//ã‚­ãƒ¼å…¥åŠ›ã‚’M5ã«é€šçŸ¥
 }
 
 
 
 void KbdRptParser::OnKeyDown(uint8_t mod, uint8_t key)
 {
-// ƒL[ƒ{[ƒh‚ª‰Ÿ‚³‚ê‚½ê‡‚ÉÀs‚³‚ê‚éˆ—
+// ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ãŒæŠ¼ã•ã‚ŒãŸå ´åˆã«å®Ÿè¡Œã•ã‚Œã‚‹å‡¦ç†
 
-// ƒL[ƒf[ƒ^‚É‚Â‚¢‚Ä‚ÍA•Êƒf[ƒ^‚ğQÆ
-//	USBƒL[ƒ{[ƒh(JP)‚ÆM5 Faces‚ÌƒL[ƒR[ƒh•ÏŠ·ƒe[ƒuƒ‹ (ƒVƒtƒgƒL[‚È‚µj
+// ã‚­ãƒ¼ãƒ‡ãƒ¼ã‚¿ã«ã¤ã„ã¦ã¯ã€åˆ¥ãƒ‡ãƒ¼ã‚¿ã‚’å‚ç…§
+//	USBã‚­ãƒ¼ãƒœãƒ¼ãƒ‰(JP)ã¨M5 Facesã®ã‚­ãƒ¼ã‚³ãƒ¼ãƒ‰å¤‰æ›ãƒ†ãƒ¼ãƒ–ãƒ« (ã‚·ãƒ•ãƒˆã‚­ãƒ¼ãªã—ï¼‰
 	const uint8_t KeyboardTable[256]       PROGMEM = { 
 //         0     1     2     3     4     5     6     7     8     9     A     B     C     D     E     F
 		0x00, 0x00, 0x00, 0x00,  'a',  'b',  'c',  'd',  'e',  'f',  'g',  'h',  'i',  'j',  'k',  'l', 	// 0x00
 		'm',  'n',  'o',  'p',  'q',  'r',  's',  't',  'u',  'v',  'w',  'x',  'y',  'z',  '1',  '2', 		// 0x10
 		 '3',  '4',  '5',  '6',  '7',  '8',  '9',  '0', 0x0d, 0x1b, 0x08, 0x09, 0x20, 0x2d, 0xde, 0x00, 	// 0x20
 		0xdb, 0x00, 0xdd, 0x3b, 0x3a, 0x00, 0x2c, 0x2e, 0x2f, 0xf2, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 	// 0x30
-		0x00, 0x00, 0x00, 0x00, 0x7b, 0xf4, 0x00, 0x00, 0xbc, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0xf7, 	// 0x40
-		0xfb, 0xfd, 0xfe, 0x00, 0x2f, 0x2a, 0x2d, 0x2b, 0x0d, 0x00, 0xfd, 0x00, 0xfb, 0x00, 0xf7, 0x00, 	// 0x50
+		0x00, 0x00, 0x00, 0x00, 0x7b, 0xf4, 0x00, 0x00, 0xbc, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0xc1, 	// 0x40
+		0xbf, 0xc0, 0xb7, 0x00, 0x2f, 0x2a, 0x2d, 0x2b, 0x0d, 0x00, 0xfd, 0x00, 0xfb, 0x00, 0xf7, 0x00, 	// 0x50
 		0xfe, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 	// 0x60 (TENKEY NUMLOCK OFF)
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 	// 0x70
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5c, 0xf3, 0x5c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 	// 0x80
@@ -167,7 +187,7 @@ void KbdRptParser::OnKeyDown(uint8_t mod, uint8_t key)
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00   	// 0xF0
 	};
 
-//	USBƒL[ƒ{[ƒh(JP)‚ÆM5 Faces‚ÌƒL[ƒR[ƒh•ÏŠ·ƒe[ƒuƒ‹ (ƒVƒtƒgƒL[—L‚èj
+//	USBã‚­ãƒ¼ãƒœãƒ¼ãƒ‰(JP)ã¨M5 Facesã®ã‚­ãƒ¼ã‚³ãƒ¼ãƒ‰å¤‰æ›ãƒ†ãƒ¼ãƒ–ãƒ« (ã‚·ãƒ•ãƒˆã‚­ãƒ¼æœ‰ã‚Šï¼‰
 	const uint8_t KeyboardTablewShift[256] PROGMEM = { 
 //        0     1     2     3     4     5     6     7     8     9     A     B     C     D     E     F
 		0x00, 0x00, 0x00, 0x00,  'A',  'B',  'C',  'D',  'E',  'F',  'G',  'H',  'I',  'J',  'K',  'L', 	// 0x00
@@ -188,8 +208,8 @@ void KbdRptParser::OnKeyDown(uint8_t mod, uint8_t key)
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00   	// 0xF0
 	};
 
-	uint8_t c;					// •ÏŠ·Œã‚ÌƒR[ƒh’l
-	MODIFIERKEYS m;				// Shift/Alt/Ctrl‚Ì’Ê’m
+	uint8_t c;					// å¤‰æ›å¾Œã®ã‚³ãƒ¼ãƒ‰å€¤
+	MODIFIERKEYS m;				// Shift/Alt/Ctrlã®é€šçŸ¥
 
 	*((uint8_t*)&m) = mod;
 
@@ -198,7 +218,7 @@ void KbdRptParser::OnKeyDown(uint8_t mod, uint8_t key)
 	Serial.print("DN ");
 	PrintKey(mod, key);
 	#endif
-// USƒL[”z’u‚È‚Ì‚Åƒ[ƒJƒ‹ƒe[ƒuƒ‹‚É•ÏX
+// USã‚­ãƒ¼é…ç½®ãªã®ã§ãƒ­ãƒ¼ã‚«ãƒ«ãƒ†ãƒ¼ãƒ–ãƒ«ã«å¤‰æ›´
 //  uint8_t c = OemToAscii(mod, key);
 
 	if ((m.bmLeftShift  == 1)|(m.bmRightShift  == 1)){
@@ -206,16 +226,16 @@ void KbdRptParser::OnKeyDown(uint8_t mod, uint8_t key)
 	}else{
 		c = KeyboardTable[key];
 	}
-//10ƒL[‚ªg‚í‚ê‚½‚ÌNUMLOCKˆ—
+//10ã‚­ãƒ¼ãŒä½¿ã‚ã‚ŒãŸæ™‚ã®NUMLOCKå‡¦ç†
 
 	if ((key >= 0x54) && (key <= 0x62)){
-		if (kbdLockingKeys.kbdLeds.bmNumLock == 1) {		//NUMLOCK‚Ìó‘Ô‚Å“ü—Í’l‚ğ•Ï‚¦‚é
+		if (kbdLockingKeys.kbdLeds.bmNumLock == 1) {		//NUMLOCKã®çŠ¶æ…‹ã§å…¥åŠ›å€¤ã‚’å¤‰ãˆã‚‹
 			c = KeyboardTablewShift[key];
 		}else{
 			c = KeyboardTable[key];
 		}
 	}
-// ctrl+c‚Ì—áŠOˆ—
+// ctrl+cã®ä¾‹å¤–å‡¦ç†
 	if ((key == 0x06) || (key == 0x44)){
 		if ((m.bmRightCtrl  == 1)|(m.bmLeftCtrl  == 1)){
 			c = 0xbc;
@@ -224,9 +244,9 @@ void KbdRptParser::OnKeyDown(uint8_t mod, uint8_t key)
 
 
 
-// ƒtƒ@ƒ“ƒNƒVƒ‡ƒ“ƒL[‚Ìˆ—
-// •¶š—ñ“ü—Í‚Ìˆ—i16•¶š‚Ü‚ÅOKj
-// ‚±‚±‚Åˆ—‚·‚éê‡‚Í•ÏŠ·Œã‚ÌƒR[ƒh’l‚Í0x00‚Å‚ ‚é•K—v‚ ‚è
+// ãƒ•ã‚¡ãƒ³ã‚¯ã‚·ãƒ§ãƒ³ã‚­ãƒ¼ã®å‡¦ç†
+// æ–‡å­—åˆ—å…¥åŠ›ã®å‡¦ç†ï¼ˆ16æ–‡å­—ã¾ã§OKï¼‰
+// ã“ã“ã§å‡¦ç†ã™ã‚‹å ´åˆã¯å¤‰æ›å¾Œã®ã‚³ãƒ¼ãƒ‰å€¤ã¯0x00ã§ã‚ã‚‹å¿…è¦ã‚ã‚Š
 	switch(key)
 	{
 		case 0x3a:      //F1 key
@@ -269,7 +289,7 @@ void KbdRptParser::OnKeyDown(uint8_t mod, uint8_t key)
 		break;
 	}
 
-// I2C‚Öƒf[ƒ^‚ğƒZƒbƒg
+// I2Cã¸ãƒ‡ãƒ¼ã‚¿ã‚’ã‚»ãƒƒãƒˆ
 	if (c){
 		KeyDataUpdate(c);
 		OnKeyPressed(c);
@@ -278,8 +298,8 @@ void KbdRptParser::OnKeyDown(uint8_t mod, uint8_t key)
 }
 
 void KbdRptParser::OnControlKeysChanged(uint8_t before, uint8_t after) {
-// SHIFT/ALT/CTRL‚Ìó‘Ô•Ï‰»‚ª‚ ‚Á‚½ê‡‚ÉŒÄ‚Î‚ê‚é
-// ‘¼‚ÌƒL[‚Æ•¹—p‚·‚éƒL[‚Í‚±‚±‚Å‰Ÿ‚³‚ê‚½–‚ğ’²‚×‚é•K—v‚ª‚ ‚è‚Ü‚·B
+// SHIFT/ALT/CTRLã®çŠ¶æ…‹å¤‰åŒ–ãŒã‚ã£ãŸå ´åˆã«å‘¼ã°ã‚Œã‚‹
+// ä»–ã®ã‚­ãƒ¼ã¨ä½µç”¨ã™ã‚‹ã‚­ãƒ¼ã¯ã“ã“ã§æŠ¼ã•ã‚ŒãŸäº‹ã‚’èª¿ã¹ã‚‹å¿…è¦ãŒã‚ã‚Šã¾ã™ã€‚
 
 	MODIFIERKEYS beforeMod;
 	*((uint8_t*)&beforeMod) = before;
@@ -361,7 +381,7 @@ KbdRptParser Prs;
 
 void setup()
 {
-//ƒ|[ƒgİ’è
+//ãƒãƒ¼ãƒˆè¨­å®š
 
 	DDRB = DDRB | 0x10;			//PB4 OUTPUT (USB RST)
 	DDRB = DDRB & 0xDF;			//PB5 INPUT (INT) 
@@ -378,36 +398,41 @@ void setup()
 
 	PORTB = PORTB | 0x10;		//PB4 HIGH
 
-//ƒOƒ[ƒoƒ‹•Ï”‰Šú‰»
+//ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°åˆæœŸåŒ–
 	padMode = 0;
 	padData = 0x00;
 	strBufEnd  = 0;
 	strBufPointer = 0;
 	hadPressed = 0;
+	firstBoot = 1;
+	
 
-//I2C—LŒøAŠ„‚è‚İg—p
+//I2Cæœ‰åŠ¹ã€å‰²ã‚Šè¾¼ã¿ä½¿ç”¨
 	Wire.begin(FACES_KEYBOARD_I2C_ADDR);
 	Wire.onRequest(requestEvent);
+	Wire.onReceive(sendEvent);
 
-//UARTˆê‰—LŒø‰»(ƒtƒ@[ƒ€‘‚«Š·‚¦‚É¢‚é‚½‚ßj
+//UARTä¸€å¿œæœ‰åŠ¹åŒ–(ãƒ•ã‚¡ãƒ¼ãƒ æ›¸ãæ›ãˆæ™‚ã«å›°ã‚‹ãŸã‚ï¼‰
 	Serial.begin( 115200 );
 
 	#ifdef DEBUG_PRINT 
 	#if !defined(__MIPSEL__)
-	while (!Serial); // Leonardo—p‚ÌWaitˆ—AUSBƒVƒŠƒAƒ‹Ú‘±Š®—¹‚Ü‚Å‘Ò‚½‚³‚ê‚éB
+	while (!Serial); // Leonardoç”¨ã®Waitå‡¦ç†ã€USBã‚·ãƒªã‚¢ãƒ«æ¥ç¶šå®Œäº†ã¾ã§å¾…ãŸã•ã‚Œã‚‹ã€‚
 	#endif
 	Serial.println("Start");
 	#endif
 
-	if (Usb.Init() == -1){					//USBƒ†ƒjƒbƒg‚ª–³‚¢ê‡‚Ìˆ—
+	if (Usb.Init() == -1){					//USBãƒ¦ãƒ‹ãƒƒãƒˆãŒç„¡ã„å ´åˆã®å‡¦ç†
 		#ifdef DEBUG_PRINT 
 		Serial.println("OSC did not start.");
+		Serial.println("PAD MODE");
 		#endif
-		padMode = 1;						//PADƒ‚[ƒh‚ÉˆÚs
-		padData = 0xff;						//PADƒ‚[ƒh‚Í‰Šú’l‚Í7FˆÈã•Ô‚·•K—v‚ª‚ ‚éB
+		padMode = 1;						//PADãƒ¢ãƒ¼ãƒ‰ã«ç§»è¡Œ
+		padData = 0xff;						//PADãƒ¢ãƒ¼ãƒ‰ã¯åˆæœŸå€¤ã¯7Fä»¥ä¸Šè¿”ã™å¿…è¦ãŒã‚ã‚‹ã€‚
+		IRQ_0;										//ã‚­ãƒ¼å…¥åŠ›ã‚’M5ã«é€šçŸ¥
 	}
 
-	delay( 200 );							//ƒL[ƒ{[ƒh‰Šú‰»‘Ò‚¿
+	delay( 200 );							//ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰åˆæœŸåŒ–å¾…ã¡
 	HidKeyboard.SetReportParser(0, &Prs);
 
 
@@ -416,17 +441,17 @@ void setup()
 void loop()
 {
 
-// ƒ‹[ƒvˆ—
+// ãƒ«ãƒ¼ãƒ—å‡¦ç†
 	unsigned char tData = 0xff;
 
 	Usb.Task();
 
-	if (hadPressed == 0) {							// Buffer‚Ìƒ|ƒCƒ“ƒ^ƒŠƒZƒbƒgˆ—
-		strBufEnd  = 0;								// ‹ó‚É‚È‚Á‚½‚ç‰ŠúˆÊ’u‚É–ß‚·
+	if (hadPressed == 0) {							// Bufferã®ãƒã‚¤ãƒ³ã‚¿ãƒªã‚»ãƒƒãƒˆå‡¦ç†
+		strBufEnd  = 0;								// ç©ºã«ãªã£ãŸã‚‰åˆæœŸä½ç½®ã«æˆ»ã™
 		strBufPointer = 0;
 	}
 
-	tData = 0xff;										// JOYSTICKƒ|[ƒg“ü—Í
+	tData = 0xff;										// JOYSTICKãƒãƒ¼ãƒˆå…¥åŠ›
 	if ((PINF & 0x30) == 0) tData = tData & 0xBf; 		// Start
 	else {
 		if ((PINF & 0x10) == 0) tData = tData & 0xfe; 	//UP
@@ -442,34 +467,30 @@ void loop()
 	if ((PIND & 0x08) == 0) tData = tData & 0xdf; 		//B
 
 
-	if( Usb.getUsbTaskState() != USB_STATE_RUNNING ) { //USB‚ª”²‚¢‚Ä‚¢‚é‚Æ‚«‚ÍJOYSTICKƒ‚[ƒh‚ÉˆÚs
+	if( Usb.getUsbTaskState() != USB_STATE_RUNNING ) { //USBãŒæŠœã„ã¦ã„ã‚‹ã¨ãã¯JOYSTICKãƒ¢ãƒ¼ãƒ‰ã«ç§»è¡Œ
 		padMode = 1;
-
-		if (tData != tDataOld){							//KEYDATA‚ÌXV‚ª‚ ‚Á‚½‚Ì‚İ’Ê’m
-			padData = tData;
-			hadPressed = 1;
-			IRQ_0;
-		}
+		padData = tData;
+		IRQ_0;
 
 	}else{
-		padData = 0x00;									//USBƒL[ƒ{[ƒh‚ª‚Â‚È‚ª‚ê‚Ä‚¢‚é
 		padMode = 0;
 
 		if (tData != tDataOld){
-			if (hadPressed ==0){						//KEYBUFFER‚ª‹ó‚¢‚Ä‚¢‚é‚Ì‚İ—LŒø
-				if ((tData & 0x01) == 0) KeyDataUpdate(0xfe);	//UP
-				if ((tData & 0x02) == 0) KeyDataUpdate(0xfd);	//DOWN
-				if ((tData & 0x04) == 0) KeyDataUpdate(0xfb);	//LEFT
-				if ((tData & 0x08) == 0) KeyDataUpdate(0xf7);	//RIGHT
-				if ((tData & 0x10) == 0) KeyDataUpdate(0x20);	//A
-				if ((tData & 0x20) == 0) KeyDataUpdate(0x6d);	//B
-				if ((tData & 0x40) == 0) KeyDataUpdate(0xf4);	//SELECT
-				if ((tData & 0x80) == 0) KeyDataUpdate(0x0d);	//START
+			if (hadPressed ==0){						//KEYBUFFERãŒç©ºã„ã¦ã„ã‚‹æ™‚ã®ã¿æœ‰åŠ¹
+				if (tData != 0xff){
+					if ((tData & 0x01) == 0) KeyDataUpdate(0xb7);	//UP
+					if ((tData & 0x02) == 0) KeyDataUpdate(0xc0);	//DOWN
+					if ((tData & 0x04) == 0) KeyDataUpdate(0xbf);	//LEFT
+					if ((tData & 0x08) == 0) KeyDataUpdate(0xc1);	//RIGHT
+					if ((tData & 0x10) == 0) KeyDataUpdate(0x20);	//A
+					if ((tData & 0x20) == 0) KeyDataUpdate(0x6d);	//B
+					if ((tData & 0x40) == 0) KeyDataUpdate(0xf4);	//SELECT
+					if ((tData & 0x80) == 0) KeyDataStrUpdate("run\n");	//START
+				}
 			}
 		}
-
-
 	}
+
 	tDataOld = tData;
 
 }
