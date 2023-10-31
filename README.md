@@ -16,6 +16,9 @@ MSX0製品版(ver:0.05.04)への本製品の対応ですが、新しいスケッ
 ### Firmware (USB KEYBOARD版)
 [USB KEYBOARD/MSX JOYSTICK対応版 Firmware](./Arduino/USBHIDBootKbd_MSX0/)  
 
+sketchの書き込み方法は組み立て説明書の「Arduinoスケッチの書き込み」を参照ください。  
+[組み立て説明書](./AssemblyManual/Assembly.md)
+
 ### 仕様上の制約について
 動作は旧KEYBOARD仕様に準拠するため複数キーや押しっぱなしのキー認識が出来ません。  
 また、MSX0の仕様上、旧キーボードモードでは本体Grove I2C_A端子との併用ができません。  
@@ -159,9 +162,7 @@ URL未定
 
 
 ## ■ 組み立て説明書について  
-準備中です。
-<!-- 下記を参照ください。  
-[組み立て説明書](./AssemblyManual/Assembly.md) -->
+[組み立て説明書](./AssemblyManual/Assembly.md)
 
 ## ■ 動作チェックソフト  
 下記ツールでMSXからキーボード各キーの押した状態の確認を行う事ができます。  
